@@ -1,13 +1,8 @@
 import java.util.Random;
 import java.util.Scanner;
 
-/**
- * Laberinto N x M generado con una semilla, con 3 portales "P".
- *
- * Camino más corto de S a E con UNA sola función recursiva (resolver),
- * apoyada en UNA pila. Sin matriz de visitados, sin colas/listas/mapas,
- * sin BFS / DFS / Dijkstra / A*. El laberinto NO se modifica al resolver.
- */
+ 
+
 public class Laberinto {
 
     static final int PORTALES = 3;
