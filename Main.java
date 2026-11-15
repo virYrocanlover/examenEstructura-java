@@ -18,6 +18,8 @@ public class Main {
         Laberinto.configurar(n, m, semilla);
 
         System.out.println("Laberinto ");
+
+
         
 
         
