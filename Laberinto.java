@@ -33,6 +33,7 @@ public class Laberinto {
         p0dx = filaDeIdx(idxDestino(0)) - p0x; p0dy = colDeIdx(idxDestino(0))-p0y;
         p1dx = filaDeIdx(idxDestino(1)) - p1x; p1dy = colDeIdx(idxDestino(1))-p1y;
         p2dx = filaDeIdx(idxDestino(2)) - p2x; p2dy = colDeIdx(idxDestino(2))-p2y;
+    }
 
         //Funcion recursiva
         static int procesar(int modo, int a, int b, int c, int d, int e){
@@ -93,8 +94,7 @@ public class Laberinto {
                 if(a>= N) return 0;
 
                 char ch = celda(a,b);
-                if (c == 1 && ch == ' ' && procesar(CONTIENE, a, b,0,0,0)== 1)
-                    ch = '*'
+                if (c == 1 && ch == ' ' && procesar(CONTIENE, a, b,0,0,0)== 1)ch = '*';
                 System.out.print(ch);
                 System.out.print(' ');
 
@@ -110,10 +110,10 @@ public class Laberinto {
             //Recorremos la pila sacando elememtnos y los devuelve al volver
             if (modo == CONTIENE){
                 if (mejorRuta.vacia()) return 0;
-                int tx = mejorRuta.topX(), tx = mejorRuta.topY();
+                int tx = mejorRuta.topX(), ty = mejorRuta.topY();
                 if (tx == a && ty == b) return 1;
                 mejorRuta.pop();
-                int r = procesar(CONTIENE, A, B, 0,0,0);
+                int r = procesar(CONTIENE, a, b, 0,0,0);
                 mejorRuta.push(tx, ty);
                 return r; //restaura la pila
             }
@@ -125,10 +125,10 @@ public class Laberinto {
                 mejorRuta.pop();
                 boolean primero = mejorRuta.vacia();
 
-                procesar(VOLCAR, O, O, O, O, O);
+                procesar(VOLCAR, 0, 0, 0, 0, 0);
                 System.out.println((primero ? "": "->") + "(" + x + "," + y + ")");
                 mejorRuta.push(x, y);
-                return 0; //restaura la pila
+                return 0; //restaura la pila    
             }
 
             return 0;
@@ -168,7 +168,7 @@ public class Laberinto {
         //La casilla p+x, p+y es valida? (no es el mismo sitio y no es pared)
         static boolean destinoValido(int k){
             if (pDX(k)==0 && pDY(k) == 0) return false;
-            return !esPared(pX(k)+ pDX(k), py(k)+ pDY(k));
+            return !esPared(pX(k)+ pDX(k), pY(k)+ pDY(k));
         }
 
 
@@ -192,7 +192,7 @@ public class Laberinto {
 
         //celd de destino aleatoria
         static int idxDestino(int k){
-            return (int)(mezclar(200 + k)% (filas()*columnas()));
+            return (int) (mezclar(200 + k) % (filas() * columnas()));
 
         }
 
@@ -215,11 +215,15 @@ public class Laberinto {
             return i != filas()/2 &&(j == columnas()/2 || bit(i,j));
         }
 
+        static boolean horiz(int i, int j){
+            return j != columnas() / 2 && (i == filas() / 2 || !bit(i, j));
+        }
+
         static boolean esPared(int r, int c){
             if(r <= 0 || c <= 0 || r >= N - 1 || c >= M - 1) return true;   // borde
             if(r % 2 == 1 && c % 2 == 1) return false;                      // celda
             if  (r % 2 == 0 && c % 2 == 0) return true;                       // pilar
-            if (r % 2) {
+            if (r % 2 == 0)  {
                 // muro entre (r-1,c) y (r+1,c)
                 int j = (c-1)/2, iu =(r-2)/2, il = r / 2, ci = filas() / 2;
                 return !((iu < ci && vert(iu, j)) || (il > ci && vert(il, j)));
@@ -262,7 +266,7 @@ public class Laberinto {
 
 
         
-    }
+    
 
 
     

@@ -1,4 +1,4 @@
-public class Pila{
+class Pila{
     private  static class Nodo{
         final int x, y;
         final Nodo sig;
@@ -9,8 +9,8 @@ public class Pila{
     void push(int x, int y) { tope = new Nodo(x, y, tope);}
     void  pop() {tope = tope.sig;}
     boolean vacia() {return tope == null;}
-    int topx() {return tope.x;}
-    int topy() {return tope.y;}
+    int topX() {return tope.x;}
+    int topY() {return tope.y;}
     //Misma cadena de nodos: no se copia nada, solo se guarda el puntero.
     Pila instantanea(){
         Pila c = new Pila();
