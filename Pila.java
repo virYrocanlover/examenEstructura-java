@@ -11,11 +11,5 @@ class Pila{
     boolean vacia() {return tope == null;}
     int topX() {return tope.x;}
     int topY() {return tope.y;}
-    //Misma cadena de nodos: no se copia nada, solo se guarda el puntero.
-    Pila instantanea(){
-        Pila c = new Pila();
-        c.tope = tope;
-        return c;
-    }
-
+  
 }
