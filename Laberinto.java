@@ -171,20 +171,98 @@ public class Laberinto {
             return !esPared(pX(k)+ pDX(k), py(k)+ pDY(k));
         }
 
+
+
+        //Elige celdas distintas sin contar S ni E a partir de la semilla
         static int celdaPortal(int k){
             int kp = filas()* columnas()-2 ;//Celdas sin S ni E
             int a = (int)(mezclar(100)%kp);
             int b = (int) (mezclar(101) % (kp -1));
+            if (b >= a) b++;
+            int c = (int)(mezclar(102)% (kp-2));
+            int lo = Math.min(a, b), hi = Math.max(a, b);
+            if(c >= lo) c++;
+            if(c >= hi) c++;
+            int idx = (k == 0 ? a:(k ==1 ? b:c))+1; //Salta S(indice 0)
+
+            if(idx >= columnas()-1) idx++; //Salta E(indice C-1)
+            return idx;
+
+        }
+
+        //celd de destino aleatoria
+        static int idxDestino(int k){
+            return (int)(mezclar(200 + k)% (filas()*columnas()));
+
+        }
+
+        // LABERINTO VIRTUAL (árbol con raíz en el centro, generado por semilla)
+        // Las celdas están en posiciones (fila impar, columna impar). Cada celda,
+        // salvo la central, se conecta con UN vecino que está más cerca del centro
+        // (vertical u horizontal, según un bit aleatorio de la semilla). Como cada
+        // celda tiene un solo "padre", no existen ciclos.
+        
+        static int filas() {return (N-1)/2;}
+        static int columnas() {return (M-1)/2;}
+        static int filaDeIdx(int idx) {return 1+2 * (idx/columnas());}
+        static int colDeIdx(int idx){ return 1+2 *(idx % columnas());}
+
+        static boolean bit(int i, int j){
+            return ((mezclar(((long) (i + 1) << 32) | j) >>> 17) & 1L) == 1L;
+        }
+
+        static boolean vert(int i, int j){
+            return i != filas()/2 &&(j == columnas()/2 || bit(i,j));
+        }
+
+        static boolean esPared(int r, int c){
+            if(r <= 0 || c <= 0 || r >= N - 1 || c >= M - 1) return true;   // borde
+            if(r % 2 == 1 && c % 2 == 1) return false;                      // celda
+            if  (r % 2 == 0 && c % 2 == 0) return true;                       // pilar
+            if (r % 2) {
+                // muro entre (r-1,c) y (r+1,c)
+                int j = (c-1)/2, iu =(r-2)/2, il = r / 2, ci = filas() / 2;
+                return !((iu < ci && vert(iu, j)) || (il > ci && vert(il, j)));
+                
+            }
+            // muro entre (r,c-1) y (r,c+1)
+            int i = (r - 1) / 2, jl = (c - 2) / 2, jr = c / 2, cj = columnas() / 2;
+            return !((jl < cj && horiz(i, jl)) || (jr > cj && horiz(i, jr)));
+
+        }
+
+        static char celda(int r, int c){
+            if (r == inicioX && c == inicioY) return 'S';
+            if (r == finX && c == finY) return 'E';
+            if (indicePortal(r, c) != -1) return 'P';
+            return esPared(r,c)? '#': ' ';
             
         }
 
+        static long mezclar(long v){
+            long z = v + semilla * 0x9E3779B97F4A7C15L + 0x9E3779B97F4A7C15L;
+             z = (z ^ (z >>> 30)) * 0xBF58476D1CE4E5B9L;
+             z = (z ^ (z >>> 27)) * 0x94D049BB133111EBL;
+             z = z ^ (z >>> 31);
+             return z & Long.MAX_VALUE;
+        }
+
+         // Direcciones: 0 arriba, 1 abajo, 2 izquierda, 3 derecha (opuesta = d ^ 1)
+
+        static  int dx(int d) { return d == 0 ? -1 : (d == 1 ? 1 : 0); }
+        static int dy(int d) { return d == 2 ? -1 : (d == 3 ? 1 : 0); }
+
+        static String describirPortal(int k){
+            return "P" + (k + 1) + " (" + pX(k) + "," + pY(k) + ") -> (" 
+            + (pX(k) + pDX(k)) + "," + (pY(k) + pDY(k)) + ")"
+            + (destinoValido(k) ? "" : "  [destino inválido: no teletransporta]");
+
+
+        }
 
 
         
     }
-
-
-
 
 
     
