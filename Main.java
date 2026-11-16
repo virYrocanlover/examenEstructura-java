@@ -1,17 +1,6 @@
 import java.util.Scanner;
 
-/**
- * Programa principal: pide N, M y semilla, crea el laberinto, lo resuelve
- * y muestra el resultado. No tiene ciclos ni recursión: todo el trabajo
- * lo hace Laberinto.procesar().
- *
- * Archivos: Main.java, Laberinto.java, Pila.java
- * Compilar:  javac *.java      Ejecutar:  java Main
- *
- * Laberintos muy grandes (más de ~51x51) pueden necesitar más pila de
- * llamadas para la recursión; en ese caso ejecutar con:
- *            java -Xss256m Main
- */
+
 public class Main {
 
     public static void main(String[] args) {

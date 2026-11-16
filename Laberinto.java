@@ -1,11 +1,16 @@
 public class Laberinto {
 
-    static final int RESOLVER = 0,
+    static final int EVALUAR_RUTAS = 0,
                     IMPRIMIR = 1,
                     CONTIENE = 2,
-                    VOLCAR = 3;
-    static final int LEJOS = 1_000_000; //para celdas inutiles
-
+                    VOLCAR = 3,
+                    TRAZAR_TRAMO =4,
+                    SUBIR_HASTA = 5,
+                    PROFUNDIDAD = 6,
+                    SUBIR_LCA = 7,
+                    INVERTIR_SEQ = 8,
+                    RECORRER_SEQ = 9;
+    
     static int N,M;
     static long semilla;
     static int inicioX = 1, inicioY = 1; //S:esquina superior derecha
@@ -16,15 +21,20 @@ public class Laberinto {
     static int p1x, p1y, p1dx, p1dy;
     static int p2x, p2y, p2dx, p2dy;
 
-    static Pila ruta = new Pila();
-    static Pila mejorRuta = null; 
+    static Pila mejorRuta = new Pila(); 
     static int mejor = Integer.MAX_VALUE; // pasos del mejor camino
+    static int mejorSecuencia= 0;
 
     static void configurar(int n, int m, long s){
         N = n;
         M = m;
         semilla = s;
-        finY = m-2;
+        finX = 1;
+        finY = ((m - 2) % 2 == 1) ? (m - 2) : (m - 3);
+
+        mejorRuta = new Pila();
+        mejor = Integer.MAX_VALUE;
+        mejorSecuencia = 0;
 
         p0x = filaDeIdx(celdaPortal(0)); p0y = colDeIdx(celdaPortal(0));
         p1x = filaDeIdx(celdaPortal(1)); p1y = colDeIdx(celdaPortal(1));
@@ -38,58 +48,48 @@ public class Laberinto {
         //Funcion recursiva
         static int procesar(int modo, int a, int b, int c, int d, int e){
 
-            //Resolver
-            if(modo == RESOLVER){
-                int x = a, y=b, pasos=c, desde = d, usados = e; //pared fuera del mapa
-                if (esPared(x,y)) return 0;
-
-                int p = indicePortal(x,y);
-                if (p != -1 && ((usados >> p) & 1) != 0) return 0; //portal ya usado
-                if (pasos + promesa(x,y, usados) >= mejor) return 0; //regla 2
-
-                ruta.push(x, y);
-
-                if (x == finX && y ==finY){
-                    mejor = pasos;
-                    mejorRuta = ruta.instantanea(); //solo una referencia
-
-                } else if (p != -1 && destinoValido(p)) {
-
-                    //Regla 3: portal
-                    procesar(RESOLVER, x + pDX(p), y + pDY(p), pasos, -1, usados |(1<<p));
-                    
-                } else {
-                    //Regla 1
-                    int k0 = promesa(x + dx(0), y + dy(0), usados)* 4+0;
-                    int k1 = promesa(x + dx(1), y + dy(1), usados)* 4+1;
-                    int k2 = promesa(x + dx(2), y + dy(2), usados)* 4+2;
-                    int k3 = promesa(x + dx(3), y + dy(3), usados)* 4+3;
-                    int t;
-                    t = Math.min(k0, k1); k1 = Math.max(k0, k1); k0=t;
-                    t = Math.min(k2, k3); k3 = Math.max(k2, k3); k2 = t;
-                    t = Math.min(k0, k2); k2 = Math.max(k0, k2); k0 = t;
-                    t = Math.min(k1, k3); k3 = Math.max(k1, k3); k1 = t;
-                    t = Math.min(k1, k2); k2 = Math.max(k1, k2); k1 = t;
-
-                    int atras = desde ^1;
-
-                    if ((k0 & 3) != atras) procesar(RESOLVER, x + dx(k0 & 3),
-                    y + dy(k0 & 3), pasos +1, k0 & 3, usados);
-                    if ((k1 & 3)!= atras) procesar(RESOLVER, x + dx(k1 & 3),
-                    y + dy(k1 & 3), pasos + 1, k1 & 3, usados);
-                    if ((k2 & 3)!= atras) procesar(RESOLVER, x + dx(k2 & 3),
-                    y + dy(k2 & 3), pasos +1, k2 & 3, usados);
-                    if ((k3 & 3) != atras) procesar(RESOLVER, x + dx(k3 & 3),
-                    y +  dy(k2 & 3), pasos +1,k3 & 3, usados);
-
+            //EVALUAR_RUTAS: evalua las combinaciones de portales LCA
+            if(modo == EVALUAR_RUTAS){
+                int distMeta = distanciaLCA(a,b, finX, finY); //pared fuera del mapa
+                if (distMeta >= 0 && c + distMeta < mejor) {
+                    mejor = c + distMeta;
+                    mejorSecuencia = e;
                 }
 
-                ruta.pop(); //retrocede
+                //Portal 0
+                if ((d & 1)== 0 && destinoValido(0)) {
+                    int dist0 = distanciaLCA(a,b,p0x,p0y);
+                    if (dist0 >= 0){
+                        procesar(EVALUAR_RUTAS, p0x+p0dx, p0y+p0dy,c+dist0,d|1,(e <<2)|1);
+                    }
+                    
+                }
+
+                //Portal 1
+                if ((d & 2)== 0 && destinoValido(1)) {
+                    int dist1 = distanciaLCA(a,b,p1x, p1y);
+                    if (dist1 >= 0) {
+                        procesar(EVALUAR_RUTAS, p1x+p1dx, p1y+p1dy, c+dist1, d|2,(e<<2)|2);
+                        
+                    }
+                    
+                }
+
+                //Portal 2
+                if ((d & 4)== 0 && destinoValido(2)) {
+                    int dist2 = distanciaLCA(a,b,p2x,p2y);
+                    if (dist2 >= 0) {
+                        procesar(EVALUAR_RUTAS, p2x + p2dx, p2y + p2dy, c + dist2, d | 4, (e << 2) | 3);
+                        
+                    }
+                    
+                }
+
                 return 0;
             }
 
             
-            //Imprimir
+            //Imprimir, dibuja el laberinto celda por celda
             if (modo == IMPRIMIR){
                 if(a>= N) return 0;
 
@@ -107,7 +107,7 @@ public class Laberinto {
                 return 0;
             }
 
-            //Recorremos la pila sacando elememtnos y los devuelve al volver
+            //CONTIENE, busca si (a,b) esta en la pila mejorRuta
             if (modo == CONTIENE){
                 if (mejorRuta.vacia()) return 0;
                 int tx = mejorRuta.topX(), ty = mejorRuta.topY();
@@ -118,7 +118,7 @@ public class Laberinto {
                 return r; //restaura la pila
             }
 
-            //saca todo el camino y lo escribe al volver (asi sale de inicio a fin)
+            //imprime el recorrido guardado en la pila desde el inicio
             if (modo == VOLCAR){
                 if (mejorRuta.vacia()) return 0;
                 int x = mejorRuta.topX(), y= mejorRuta.topY();
@@ -126,31 +126,119 @@ public class Laberinto {
                 boolean primero = mejorRuta.vacia();
 
                 procesar(VOLCAR, 0, 0, 0, 0, 0);
-                System.out.println((primero ? "": "->") + "(" + x + "," + y + ")");
+                System.out.print((primero ? "": "->") + "(" + x + "," + y + ")");
                 mejorRuta.push(x, y);
                 return 0; //restaura la pila    
+            }
+
+            if (modo == TRAZAR_TRAMO){
+                int lca = encontrarLCA(a, b, c, d);
+                int lcaX = filaDeIdx(lca), lcaY = colDeIdx(lca);
+                procesar(SUBIR_HASTA, a, b, lcaX, lcaY, 1);
+                procesar(SUBIR_HASTA, c, d, lcaX, lcaY, 0);
+                return 0;
+            }
+
+
+            //SUBIR_HASTA: Apila en mejorRuta el camino directo hacia/desde el LCA
+            if (modo == SUBIR_HASTA){
+                if (a == c && b == d) return 0;
+                int padre = padreDe(a,b);
+                int px = filaDeIdx(padre), py = colDeIdx(padre);
+                int mx = (a + px) / 2, my = (b + py) / 2;
+                if (e == 1) {
+                    mejorRuta.push(mx, my);
+                    mejorRuta.push(px, py);
+                    procesar(SUBIR_HASTA, px, py, c, d, 1);
+                    
+                } else {
+                    procesar(SUBIR_HASTA, px, py, c, d, 0);
+                        mejorRuta.push(mx, my);
+                        mejorRuta.push(a, b);
+                    
+                }
+                 return 0;
+
+            }
+
+            //PROFUNDIDAD: Nivel del nodo (a,b) respecto a la raíz central del árbol
+            if (modo == PROFUNDIDAD){
+                int i = (a - 1) / 2, j = (b - 1) / 2;
+                if (i == filas() / 2 && j == columnas() / 2) return 0;
+                int padre = padreDe(a, b);
+                return 1 + procesar(PROFUNDIDAD, filaDeIdx(padre), colDeIdx(padre), 0, 0, 0);
+            }
+
+            //SUBIR_LCA: Sube (a,b) y (c,d) sincronizados hasta hallar su ancestro común
+            if (modo == SUBIR_LCA) {
+                if (a == c && b == d) return ((a - 1) / 2) * columnas() + ((b - 1) / 2);
+            if (e > 0) {
+                int p = padreDe(a, b);
+                return procesar(SUBIR_LCA, filaDeIdx(p), colDeIdx(p), c, d, e - 1);
+            }
+            if (e < 0) {
+                int p = padreDe(c, d);
+                return procesar(SUBIR_LCA, a, b, filaDeIdx(p), colDeIdx(p), e + 1);
+            }
+                int p1 = padreDe(a, b), p2 = padreDe(c, d);
+                return procesar(SUBIR_LCA, filaDeIdx(p1), colDeIdx(p1), filaDeIdx(p2), colDeIdx(p2), 0);
+                
+            }
+
+            //INVERTIR_SEQ Invierte los bloques de 2 bits de la secuencia de portales
+            if (modo == INVERTIR_SEQ){
+                if(a == 0) return b;
+                return procesar(INVERTIR_SEQ, a >> 2, (b << 2) | (a & 3), 0, 0, 0);
+            }
+
+            //RECORRER_SEQ Recorre tramo a tramo sobre mejorRuta desde (a,b)
+            if (modo == RECORRER_SEQ){
+                if (c == 0) {
+                procesar(TRAZAR_TRAMO, a, b, finX, finY, 0);
+                return 0;
+            }
+            int k = (c & 3) - 1;
+            procesar(TRAZAR_TRAMO, a, b, pX(k), pY(k), 0);
+            int destX = pX(k) + pDX(k), destY = pY(k) + pDY(k);
+            mejorRuta.push(destX, destY);
+            procesar(RECORRER_SEQ, destX, destY, c >> 2, 0, 0);
+            return 0;
+
             }
 
             return 0;
 
         }
 
-        //Promesa
-        static int promesa(int x, int y, int usados){
-            if (esPared(x,y)) return LEJOS;
-            int m = Math.abs(x-finX) + Math.abs(y-finY);
-            m = Math.min(m, atraccion(0, x, y, usados));
-            m = Math.min(m, atraccion(1, x,y, usados));
-            m = Math.min(m, atraccion(2, x, y, usados));
-            return m;
+        //METODOS AUXILIARES
+        static int distanciaLCA(int x1, int y1, int x2, int y2) {
+            int d1 = procesar(PROFUNDIDAD, x1, y1, 0, 0, 0);
+            int d2 = procesar(PROFUNDIDAD, x2, y2, 0, 0, 0);
+            int lca = procesar(SUBIR_LCA, x1, y1, x2, y2, d1 - d2);
+           int dLca = procesar(PROFUNDIDAD, filaDeIdx(lca), colDeIdx(lca), 0, 0, 0);
+            return (d1 + d2 - 2 * dLca) * 2;
+    }
+
+        static int encontrarLCA (int x1, int y1, int x2, int y2){
+            int d1 = procesar(PROFUNDIDAD, x1, y1, 0, 0, 0);
+            int d2 = procesar(PROFUNDIDAD, x2, y2, 0, 0, 0);
+            return procesar(SUBIR_LCA, x1, y1, x2, y2, d1 - d2);
+
         }
 
-        //Distancia al portal k si es valido y aun no se uso, sino LEJOS
-        static int atraccion(int k, int x, int y, int usados){
-            if (((usados >> k) & 1) != 0 || !destinoValido(k)) return LEJOS;
-            return Math.abs(x - pX(k)) + Math.abs(y - pY(k));
+        static int padreDe(int r, int c){
+            int i = (r - 1) / 2, j = (c - 1) / 2;
+            int ci = filas() / 2, cj = columnas() / 2;
+            if (vert(i, j)) {
+            int ni = (i < ci) ? i + 1 : i - 1;
+            return ni * columnas() + j;
+            } else {
+            int nj = (j < cj) ? j + 1 : j - 1;
+            return i * columnas() + nj;
+            }
 
         }
+
 
         //Portales
         static int pX (int k){ return k == 0 ? p0x: (k == 1 ? p1x: p2x);}
@@ -184,8 +272,8 @@ public class Laberinto {
             if(c >= lo) c++;
             if(c >= hi) c++;
             int idx = (k == 0 ? a:(k ==1 ? b:c))+1; //Salta S(indice 0)
-
-            if(idx >= columnas()-1) idx++; //Salta E(indice C-1)
+            int idxFin = ((finX - 1) / 2) * columnas() + ((finY - 1) / 2);
+            if(idx >= idxFin) idx++;
             return idx;
 
         }
@@ -197,10 +285,6 @@ public class Laberinto {
         }
 
         // LABERINTO VIRTUAL (árbol con raíz en el centro, generado por semilla)
-        // Las celdas están en posiciones (fila impar, columna impar). Cada celda,
-        // salvo la central, se conecta con UN vecino que está más cerca del centro
-        // (vertical u horizontal, según un bit aleatorio de la semilla). Como cada
-        // celda tiene un solo "padre", no existen ciclos.
         
         static int filas() {return (N-1)/2;}
         static int columnas() {return (M-1)/2;}
@@ -220,12 +304,12 @@ public class Laberinto {
         }
 
         static boolean esPared(int r, int c){
-            if(r <= 0 || c <= 0 || r >= N - 1 || c >= M - 1) return true;   // borde
+            if(r <= 0 || c <= 0 || r >= filas() * 2 || c >= columnas() * 2) return true;  // borde
             if(r % 2 == 1 && c % 2 == 1) return false;                      // celda
             if  (r % 2 == 0 && c % 2 == 0) return true;                       // pilar
             if (r % 2 == 0)  {
                 // muro entre (r-1,c) y (r+1,c)
-                int j = (c-1)/2, iu =(r-2)/2, il = r / 2, ci = filas() / 2;
+                int j = (c - 1) / 2, iu = (r - 2) / 2, il = r / 2, ci = filas() / 2;
                 return !((iu < ci && vert(iu, j)) || (il > ci && vert(il, j)));
                 
             }
@@ -250,11 +334,6 @@ public class Laberinto {
              z = z ^ (z >>> 31);
              return z & Long.MAX_VALUE;
         }
-
-         // Direcciones: 0 arriba, 1 abajo, 2 izquierda, 3 derecha (opuesta = d ^ 1)
-
-        static  int dx(int d) { return d == 0 ? -1 : (d == 1 ? 1 : 0); }
-        static int dy(int d) { return d == 2 ? -1 : (d == 3 ? 1 : 0); }
 
         static String describirPortal(int k){
             return "P" + (k + 1) + " (" + pX(k) + "," + pY(k) + ") -> (" 
