@@ -19,7 +19,7 @@ public class Main{
         int n = Math.max(5, sc.nextInt());
         System.out.print("Columnas (M): ");
         int m = Math.max(5, sc.nextInt());
-        System.out.println("semilla");
+        System.out.print("semilla");
         long semilla = sc.nextLong();
         ejecutar(n, m, semilla);
         }
