@@ -1,3 +1,6 @@
+//* Estructura de datos Pila propia (lista enlazada simple)
+//* Cumple con la restriccion de no usar estructuras auxiliares de Java 
+//* Ni ciclos (for, while, do while)
 class Pila{
     private  static class Nodo{
         final int x, y;
