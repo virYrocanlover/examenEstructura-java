@@ -362,6 +362,7 @@ public class Laberinto {
             return "P" + (k + 1) + " (" + pX(k) + "," + pY(k) + ") -> (" 
             + (pX(k) + pDX(k)) + "," + (pY(k) + pDY(k)) + ")"
             + (destinoValido(k) ? "" : "  [destino inválido: no teletransporta]");
+            
 
 
         }
