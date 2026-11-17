@@ -1,15 +1,13 @@
+
+
 public class Laberinto {
 
-    static final int EVALUAR_RUTAS = 0,
-                    IMPRIMIR = 1,
+    static final int IMPRIMIR = 1,
                     CONTIENE = 2,
                     VOLCAR = 3,
-                    TRAZAR_TRAMO =4,
-                    SUBIR_HASTA = 5,
-                    PROFUNDIDAD = 6,
-                    SUBIR_LCA = 7,
-                    INVERTIR_SEQ = 8,
-                    RECORRER_SEQ = 9;
+                    SUBIR_HASTA = 4,
+                    PROFUNDIDAD = 5,
+                    SUBIR_LCA = 6;
     
     static int N,M;
     static long semilla;
@@ -47,47 +45,6 @@ public class Laberinto {
 
         //Funcion recursiva
         static int procesar(int modo, int a, int b, int c, int d, int e){
-
-            //EVALUAR_RUTAS: evalua las combinaciones de portales LCA
-            if(modo == EVALUAR_RUTAS){
-                int distMeta = distanciaLCA(a,b, finX, finY); //pared fuera del mapa
-                if (distMeta >= 0 && c + distMeta < mejor) {
-                    mejor = c + distMeta;
-                    mejorSecuencia = e;
-                }
-
-                //Portal 0
-                if ((d & 1)== 0 && destinoValido(0)) {
-                    int dist0 = distanciaLCA(a,b,p0x,p0y);
-                    if (dist0 >= 0){
-                        procesar(EVALUAR_RUTAS, p0x+p0dx, p0y+p0dy,c+dist0,d|1,(e <<2)|1);
-                    }
-                    
-                }
-
-                //Portal 1
-                if ((d & 2)== 0 && destinoValido(1)) {
-                    int dist1 = distanciaLCA(a,b,p1x, p1y);
-                    if (dist1 >= 0) {
-                        procesar(EVALUAR_RUTAS, p1x+p1dx, p1y+p1dy, c+dist1, d|2,(e<<2)|2);
-                        
-                    }
-                    
-                }
-
-                //Portal 2
-                if ((d & 4)== 0 && destinoValido(2)) {
-                    int dist2 = distanciaLCA(a,b,p2x,p2y);
-                    if (dist2 >= 0) {
-                        procesar(EVALUAR_RUTAS, p2x + p2dx, p2y + p2dy, c + dist2, d | 4, (e << 2) | 3);
-                        
-                    }
-                    
-                }
-
-                return 0;
-            }
-
             
             //Imprimir, dibuja el laberinto celda por celda
             if (modo == IMPRIMIR){
@@ -130,15 +87,6 @@ public class Laberinto {
                 mejorRuta.push(x, y);
                 return 0; //restaura la pila    
             }
-
-            if (modo == TRAZAR_TRAMO){
-                int lca = encontrarLCA(a, b, c, d);
-                int lcaX = filaDeIdx(lca), lcaY = colDeIdx(lca);
-                procesar(SUBIR_HASTA, a, b, lcaX, lcaY, 1);
-                procesar(SUBIR_HASTA, c, d, lcaX, lcaY, 0);
-                return 0;
-            }
-
 
             //SUBIR_HASTA: Apila en mejorRuta el camino directo hacia/desde el LCA
             if (modo == SUBIR_HASTA){
@@ -184,47 +132,122 @@ public class Laberinto {
                 return procesar(SUBIR_LCA, filaDeIdx(p1), colDeIdx(p1), filaDeIdx(p2), colDeIdx(p2), 0);
                 
             }
-
-            //INVERTIR_SEQ Invierte los bloques de 2 bits de la secuencia de portales
-            if (modo == INVERTIR_SEQ){
-                if(a == 0) return b;
-                return procesar(INVERTIR_SEQ, a >> 2, (b << 2) | (a & 3), 0, 0, 0);
-            }
-
-            //RECORRER_SEQ Recorre tramo a tramo sobre mejorRuta desde (a,b)
-            if (modo == RECORRER_SEQ){
-                if (c == 0) {
-                procesar(TRAZAR_TRAMO, a, b, finX, finY, 0);
-                return 0;
-            }
-            int k = (c & 3) - 1;
-            procesar(TRAZAR_TRAMO, a, b, pX(k), pY(k), 0);
-            int destX = pX(k) + pDX(k), destY = pY(k) + pDY(k);
-            mejorRuta.push(destX, destY);
-            procesar(RECORRER_SEQ, destX, destY, c >> 2, 0, 0);
-            return 0;
-
-            }
-
             return 0;
 
         }
+        static void evaluarRutas(){
+            probarSecuencia(0);
+            probarSecuencia(1);
+            probarSecuencia(2);
+            probarSecuencia(3);
+            probarSecuencia((1<<2)|2);
+            probarSecuencia((1<<2)|3);
+            probarSecuencia((2<<2)|1);
+            probarSecuencia((2<<2)|3);
+            probarSecuencia((3<<2)|1);
+            probarSecuencia((3<<2)|2);
+            probarSecuencia((1<<4)|(2<<2)|3);
+            probarSecuencia((1<<4)|(3<<2)|2);
+            probarSecuencia((2<<4)|(1<<2)|3);
+            probarSecuencia((2<<4)|(3<<2)|1);
+            probarSecuencia((3<<4)|(1<<2)|2);
+            probarSecuencia((3<<4)|(2<<2)|1);
+        }
 
-        //METODOS AUXILIARES
+        static void probarSecuencia(int seq){
+            int actX= inicioX, actY= inicioY, total=0;
+            int p1= seq & 3;
+            if(p1 !=0){
+                int k =p1-1;
+                if (!destinoValido(k)) return;
+                int d = distanciaLCA(actX, actY, pX(k), pY(k));
+                if(d<0) return;
+                total+= d;
+                actX= pX(k)+pDX(k);
+                actY= pY(k)+ pDY(k);
+            }
+            int p2= (seq >> 2) & 3;
+            if(p2 !=0){
+                int k =p2-1;
+                if (!destinoValido(k)) return;
+                int d = distanciaLCA(actX, actY, pX(k), pY(k));
+                if(d<0) return;
+                total+= d;
+                actX= pX(k)+pDX(k);
+                actY= pY(k)+ pDY(k);
+            }
+            int p3= (seq >> 4) & 3;
+            if(p3 !=0){
+                int k =p3-1;
+                if (!destinoValido(k)) return;
+                int d = distanciaLCA(actX, actY, pX(k), pY(k));
+                if(d<0) return;
+                total+= d;
+                actX= pX(k)+pDX(k);
+                actY= pY(k)+ pDY(k);
+            }
+           int dFin= distanciaLCA(actX, actY, finX, finY);
+           if(dFin < 0) return;
+           total += dFin;
+           if(total< mejor){
+            mejor= total;
+            mejorSecuencia= seq;
+
+           }
+        }
+        static void reconstruirRuta(){
+            mejorRuta.push(inicioX, inicioY);
+            int actX= inicioX, actY= inicioY;
+
+            int p1= mejorSecuencia & 3;
+            if(p1 != 0){
+                int k = p1-1;
+                trazarTramo(actX, actY, pX(k), pY(k));
+                actX = pX(k)+ pDX(k);
+                actY= pY(k)+ pDY(k);
+                mejorRuta.push(actX, actY);
+            }
+            int p2= (mejorSecuencia>>2) & 3;
+            if(p2 != 0){
+                int k = p2-1;
+                trazarTramo(actX, actY, pX(k), pY(k));
+                actX = pX(k)+ pDX(k);
+                actY= pY(k)+ pDY(k);
+                mejorRuta.push(actX, actY);
+            }
+            int p3= (mejorSecuencia>>4) & 3;
+            if(p3 != 0){
+                int k = p3-1;
+                trazarTramo(actX, actY, pX(k), pY(k));
+                actX = pX(k)+ pDX(k);
+                actY= pY(k)+ pDY(k);
+                mejorRuta.push(actX, actY);
+            }
+            trazarTramo(actX, actY, finX, finY);
+        }
+        static void trazarTramo(int x1, int y1, int x2, int y2) {
+        int lca = encontrarLCA(x1, y1, x2, y2);
+        int lcaX = filaDeIdx(lca), lcaY = colDeIdx(lca);
+        procesar(SUBIR_HASTA, x1, y1, lcaX, lcaY, 1);
+        procesar(SUBIR_HASTA, x2, y2, lcaX, lcaY, 0);
+        }
+
         static int distanciaLCA(int x1, int y1, int x2, int y2) {
-            int d1 = procesar(PROFUNDIDAD, x1, y1, 0, 0, 0);
-            int d2 = procesar(PROFUNDIDAD, x2, y2, 0, 0, 0);
-            int lca = procesar(SUBIR_LCA, x1, y1, x2, y2, d1 - d2);
-           int dLca = procesar(PROFUNDIDAD, filaDeIdx(lca), colDeIdx(lca), 0, 0, 0);
-            return (d1 + d2 - 2 * dLca) * 2;
+        int d1 = procesar(PROFUNDIDAD, x1, y1, 0, 0, 0);
+        int d2 = procesar(PROFUNDIDAD, x2, y2, 0, 0, 0);
+        if (d1 < 0 || d2 < 0) return -1;
+        int lca = procesar(SUBIR_LCA, x1, y1, x2, y2, d1 - d2);
+        int dLca = procesar(PROFUNDIDAD, filaDeIdx(lca), colDeIdx(lca), 0, 0, 0);
+        return (d1 + d2 - 2 * dLca) * 2;
+        }
+
+        static int encontrarLCA(int x1, int y1, int x2, int y2) {
+        int d1 = procesar(PROFUNDIDAD, x1, y1, 0, 0, 0);
+        int d2 = procesar(PROFUNDIDAD, x2, y2, 0, 0, 0);
+        return procesar(SUBIR_LCA, x1, y1, x2, y2, d1 - d2);
     }
 
-        static int encontrarLCA (int x1, int y1, int x2, int y2){
-            int d1 = procesar(PROFUNDIDAD, x1, y1, 0, 0, 0);
-            int d2 = procesar(PROFUNDIDAD, x2, y2, 0, 0, 0);
-            return procesar(SUBIR_LCA, x1, y1, x2, y2, d1 - d2);
 
-        }
 
         static int padreDe(int r, int c){
             int i = (r - 1) / 2, j = (c - 1) / 2;
