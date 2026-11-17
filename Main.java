@@ -26,23 +26,28 @@ public class Main{
     }
     static void ejecutar(int n, int m, long semilla){
         Laberinto.configurar(n, m, semilla);
-        System.out.procesar("\nLaberinto " + n + "x" + m + " (semilla " + semilla + "):\n");
+        System.out.println("\nLaberinto " + n + "x" + m + " (semilla " + semilla + "):\n");
         Laberinto.procesar(Laberinto.IMPRIMIR, 0, 0, 0, 0, 0);
         System.out.println("\nPortales: ");
         System.out.println("  " + Laberinto.describirPortal(0));
         System.out.println("  " + Laberinto.describirPortal(1));
         System.out.println("  " + Laberinto.describirPortal(2));
 
+
+        Laberinto.evaluarRutas();
+
         
 
         System.out.println();
-        if (Laberinto.mejor == Integer.Max_VALUE){
+        if (Laberinto.mejor == Integer.MAX_VALUE){
             //* Caso limite 5: informa cuando el laberinto no tiene solucion
-            System.out.pintln("El lsberinto no tiene solucion (no existe camino).");
+            System.out.println("El lsberinto no tiene solucion (no existe camino).");
         }else{
-            System.out.println("Camino mas corto: " + Laberinto.mejor + "pasos ('*' = camino")\n";)
-            System.out.procesar(Laberinto.IMPRIMIR, 0, 0, 1, 0, 0);
-            Systen.lut.print("\nRecorrido: ");
+
+            Laberinto.reconstruirRuta();
+            System.out.println("Camino mas corto: " + Laberinto.mejor + "pasos ('*' = camino)\n");
+            Laberinto.procesar(Laberinto.IMPRIMIR, 0, 0, 1, 0, 0);
+            System.out.print("\nRecorrido: ");
             Laberinto.procesar(Laberinto.VOLCAR, 0, 0, 0, 0, 0);
             System.out.println();
         
