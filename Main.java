@@ -26,6 +26,7 @@ public class Main{
         //calcula la secuencia optima de portals usando distancia LCA
         Laberinto.procesar(Laberinto.EVALUAR_RUTAS, Laberinto.inicioX, Laberinto.inicioY, 0,0,0 );
         System.out.println();
+        
         if (Laberinto.mejor == Integer.MAX_VALUE){
             System.out.println("No existe camino");
         }else{
