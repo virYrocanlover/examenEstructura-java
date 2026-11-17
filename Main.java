@@ -30,9 +30,13 @@ public class Main{
             System.out.println("No existe camino");
             //recorre el laberinto sobre la pila sigiendo la secuancia ganadora
             Laberinto.mejorRuta.push(Laberinto.inicioX, Laberinto.inicioY);
-            int seqInv = Laberinto.procesar(Laberinto.INVERTIR_SEQ, Laberinto.mejorSecuencia, 0, 0, 0, 0);            Laberinto.procesar(Laberinto.RECORRER_SEQ, Laberinto.inicioX, Laberinto.inicioY, seqInv, 0, 0);
-
-            
+            int seqInv = Laberinto.procesar(Laberinto.INVERTIR_SEQ, Laberinto.mejorSecuencia, 0, 0, 0, 0);
+            Laberinto.procesar(Laberinto.RECORRER_SEQ, Laberinto.inicioX, Laberinto.inicioY, seqInv, 0, 0);
+            System.out.println("Camino más corto: " + Laberinto.mejor + " pasos ('*' = camino)\n");
+            Laberinto.procesar(Laberinto.IMPRIMIR, 0, 0, 1, 0, 0);
+            System.out.println("\nRecorrido: ");
+            Laberinto.procesar(Laberinto.VOLCAR,0,0,0,0,0);
+            System.out.println();
         }
     }
 }
