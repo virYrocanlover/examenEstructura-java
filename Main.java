@@ -28,6 +28,7 @@ public class Main{
         System.out.println();
         if (Laberinto.mejor == Integer.MAX_VALUE){
             System.out.println("No existe camino");
+        }else{
             //recorre el laberinto sobre la pila sigiendo la secuancia ganadora
             Laberinto.mejorRuta.push(Laberinto.inicioX, Laberinto.inicioY);
             int seqInv = Laberinto.procesar(Laberinto.INVERTIR_SEQ, Laberinto.mejorSecuencia, 0, 0, 0, 0);
