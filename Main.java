@@ -5,7 +5,7 @@ public class Main{
     public static void main(String[] args) {
         ejecutar();
     }
-    satic void ejecutar(){
+    static void ejecutar(){
         Scanner sc = new Scanner(System.in);
         System.out.print("Filas (N): ");
         int n = Math.max(5, sc.nextInt());
@@ -28,6 +28,11 @@ public class Main{
         System.out.println();
         if (Laberinto.mejor == Integer.MAX_VALUE){
             System.out.println("No existe camino");
+            //recorre el laberinto sobre la pila sigiendo la secuancia ganadora
+            Laberinto.mejorRuta.push(Laberinto.inicioX, Laberinto.inicioY);
+            int seqInv = Laberinto.procesar(Laberinto.INVERTIR_SEQ, Laberinto.mejorSecuencia, 0, 0, 0, 0);            Laberinto.procesar(Laberinto.RECORRER_SEQ, Laberinto.inicioX, Laberinto.inicioY, seqInv, 0, 0);
+
+            
         }
     }
 }
